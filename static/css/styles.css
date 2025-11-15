@@ -1,7 +1,38 @@
+body {
+	margin: 0;
+	padding: 0;
+}
+
+.mc-title {
+	font-family: 'Manufacturing Consent', system-ui;
+	font-weight: 400;
+	font-style: normal;
+}
+
 .background-img {
-	min-height: 100vh;
+	height: calc(95vh);
 	background-image: url('../img/hero.jpg');
 	background-size: cover;
 	background-position: center;
+	position: relative;
+	overflow: hidden;
+}
+
+.background-img::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-image: inherit;
+	background-size: inherit;
+	background-position: inherit;
 	filter: grayscale(1) brightness(0.2);
+	z-index: 0;
+}
+
+.background-img > * {
+	position: relative;
+	z-index: 1;
 }
