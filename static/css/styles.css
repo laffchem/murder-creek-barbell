@@ -1,0 +1,7 @@
+.background-img {
+	min-height: 100vh;
+	background-image: url('../img/hero.jpg');
+	background-size: cover;
+	background-position: center;
+	filter: grayscale(1) brightness(0.2);
+}
