@@ -1,10 +1,14 @@
 {% load static %}
-<div class="d-flex flex-column justify-content-between w-100 bg-dark background-img">
-    <div class="container">
-        <h1 class="display-1 px-3 mt-5 mc-title text-white">Murder Creek Barbell</h1>
+<div class="relative flex flex-col justify-between w-full min-h-screen">
+    <!-- Background layer with filters -->
+    <div class="absolute inset-0 bg-[url('/static/img/hero.jpg')] bg-cover bg-center bg-no-repeat grayscale brightness-25 -z-10"></div>
+    
+    <!-- Content layer (unaffected by filters) -->
+    <div class="container mx-auto px-4">
+        <h1 class="text-6xl md:text-8xl px-3 mt-20 text-white font-bold" style="font-family: 'Manufacturing Consent', sans-serif;">Murder Creek Barbell</h1>
     </div>
-    <div class="container d-flex align-items-center" style="flex: 1;">
-        <p class="text-center fs-3 text-white w-100">
+    <div class="container mx-auto px-4 flex items-center flex-1">
+        <p class="text-center text-3xl text-white w-full">
             Lift weights...and other descriptive shit
         </p>
     </div>
