@@ -3,6 +3,88 @@ body {
 	padding: 0;
 }
 
+.inter-light {
+	font-family: 'Inter', sans-serif;
+	font-optical-sizing: auto;
+	font-weight: 300;
+	font-style: normal;
+}
+
+.inter-regular {
+	font-family: 'Inter', sans-serif;
+	font-optical-sizing: auto;
+	font-weight: 400;
+	font-style: normal;
+}
+
+.inter-medium {
+	font-family: 'Inter', sans-serif;
+	font-optical-sizing: auto;
+	font-weight: 500;
+	font-style: normal;
+}
+
+.inter-semibold {
+	font-family: 'Inter', sans-serif;
+	font-optical-sizing: auto;
+	font-weight: 600;
+	font-style: normal;
+}
+
+.inter-bold {
+	font-family: 'Inter', sans-serif;
+	font-optical-sizing: auto;
+	font-weight: 700;
+	font-style: normal;
+}
+.ubuntu-light {
+	font-family: 'Ubuntu', sans-serif;
+	font-weight: 300;
+	font-style: normal;
+}
+
+.ubuntu-regular {
+	font-family: 'Ubuntu', sans-serif;
+	font-weight: 400;
+	font-style: normal;
+}
+
+.ubuntu-medium {
+	font-family: 'Ubuntu', sans-serif;
+	font-weight: 500;
+	font-style: normal;
+}
+
+.ubuntu-bold {
+	font-family: 'Ubuntu', sans-serif;
+	font-weight: 700;
+	font-style: normal;
+}
+
+.ubuntu-light-italic {
+	font-family: 'Ubuntu', sans-serif;
+	font-weight: 300;
+	font-style: italic;
+}
+
+.ubuntu-regular-italic {
+	font-family: 'Ubuntu', sans-serif;
+	font-weight: 400;
+	font-style: italic;
+}
+
+.ubuntu-medium-italic {
+	font-family: 'Ubuntu', sans-serif;
+	font-weight: 500;
+	font-style: italic;
+}
+
+.ubuntu-bold-italic {
+	font-family: 'Ubuntu', sans-serif;
+	font-weight: 700;
+	font-style: italic;
+}
+
 .mc-title {
 	font-family: 'Manufacturing Consent', system-ui;
 	font-weight: 400;
@@ -35,4 +117,30 @@ body {
 .background-img > * {
 	position: relative;
 	z-index: 1;
+}
+
+.grayscale-img {
+	filter: grayscale(100%) brightness(75%);
+}
+
+.card-img-top.grayscale-img {
+	height: 16rem !important;
+	object-fit: cover;
+}
+
+@media (min-width: 768px) {
+	.card-img-top.grayscale-img {
+		height: 20rem !important;
+		object-fit: cover;
+	}
+}
+
+.social-icon-link {
+	opacity: 0.75;
+	transition: all 0.3s ease;
+}
+
+.social-icon-link:hover {
+	opacity: 1;
+	filter: brightness(1.2);
 }
