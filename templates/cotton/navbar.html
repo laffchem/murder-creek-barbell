@@ -1,19 +1,66 @@
 <nav class="navbar navbar-expand-lg bg-black" data-bs-theme="dark">
   <div class="container">
-    <a class="navbar-brand" href="#">Home</a>
+    <a class="navbar-brand mc-title" href="{% url 'home' %}">Murder Creek Barbell</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
         <li class="nav-item">
-          <a class="nav-link" href="#">Link</a>
+          <a class="nav-link ubuntu-condensed" href="{% url 'home' %}">Home</a>
         </li>
+
+        {% if user.is_authenticated %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle ubuntu-condensed" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-person-circle me-1"></i>
+              {{ user.get_full_name|default:user.email }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end bg-dark border-secondary">
+              <li>
+                <a class="dropdown-item text-white" href="{% url 'accounts:dashboard' %}">
+                  <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item text-white" href="{% url 'accounts:billing' %}">
+                  <i class="bi bi-receipt me-2"></i> Billing
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item text-white" href="{% url 'accounts:settings' %}">
+                  <i class="bi bi-gear me-2"></i> Settings
+                </a>
+              </li>
+              <li><hr class="dropdown-divider border-secondary"></li>
+              <li>
+                <a class="dropdown-item text-danger" href="{% url 'account_logout' %}">
+                  <i class="bi bi-box-arrow-right me-2"></i> Logout
+                </a>
+              </li>
+            </ul>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link ubuntu-condensed" href="{% url 'account_login' %}">Login</a>
+          </li>
+          <li class="nav-item ms-2">
+            <a class="btn btn-danger btn-sm ubuntu-condensed-bold" href="{% url 'account_signup' %}">
+              Sign Up
+            </a>
+          </li>
+        {% endif %}
       </ul>
-      <form class="d-flex" role="search">
-        <input class="form-control me-2" type="search" placeholder="Search FAQ" aria-label="Search"/>
-        <button class="btn btn-outline-light" type="submit">Search</button>
-      </form>
     </div>
   </div>
 </nav>
+
+<style>
+  .dropdown-item:hover {
+    background-color: #2a2a2a;
+  }
+
+  .navbar-brand {
+    font-size: 1.5rem;
+  }
+</style>

@@ -1,0 +1,41 @@
+{% extends '_base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Login - Murder Creek Barbell{% endblock %}
+
+{% block content %}
+<section class="bg-black text-white min-vh-100 d-flex align-items-center py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card bg-dark border-0 shadow-lg">
+                    <div class="card-body p-5">
+                        <h1 class="display-5 ubuntu-condensed text-center mb-4 text-white">Login</h1>
+                        <p class="text-white-50 text-center mb-4">
+                            Enter your email to receive a magic link
+                        </p>
+
+                        <form method="post" action="{% url 'account_login' %}">
+                            {% csrf_token %}
+                            {{ form|crispy }}
+
+                            <button type="submit" class="btn btn-danger w-100 py-3 ubuntu-condensed-bold mt-3">
+                                Send Magic Link
+                            </button>
+                        </form>
+
+                        <div class="text-center mt-4">
+                            <p class="text-white-50">
+                                Don't have an account?
+                                <a href="{% url 'account_signup' %}" class="accent-color text-decoration-none">
+                                    Sign up
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

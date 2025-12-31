@@ -1,0 +1,33 @@
+{% extends '_base.html' %}
+{% load i18n %}
+
+{% block title %}Verify Your Email - Murder Creek Barbell{% endblock %}
+
+{% block content %}
+<section class="bg-black text-white min-vh-100 d-flex align-items-center py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card bg-dark border-0 shadow-lg">
+                    <div class="card-body p-5 text-center">
+                        <i class="bi bi-envelope-check fs-1 accent-color mb-4 d-block"></i>
+                        <h1 class="display-5 ubuntu-condensed mb-4 text-white">Check Your Email</h1>
+                        <p class="text-white mb-4">
+                            We've sent a verification link to your email address. Click the link in the email to complete your signup and get started.
+                        </p>
+                        <div class="bg-black border border-secondary rounded p-3 mb-0">
+                            <p class="text-white-50 small mb-2">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong class="text-white">Development Mode:</strong> Check your terminal/console for the email with the verification link.
+                            </p>
+                            <p class="text-white-50 small mb-0">
+                                Don't see the email? Check your spam folder or contact us for help.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

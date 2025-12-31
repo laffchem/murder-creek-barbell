@@ -1,6 +1,14 @@
+:root {
+	--accent-color: #dc3545; /* Red accent - change this to adjust site-wide accent */
+}
+
 body {
 	margin: 0;
 	padding: 0;
+}
+
+.accent-color {
+	color: var(--accent-color);
 }
 
 .ubuntu-condensed {
@@ -120,4 +128,73 @@ body {
 .social-icon-link:hover {
 	opacity: 1;
 	filter: brightness(1.2);
+}
+
+/* Form styling for dark theme */
+.form-control {
+	background-color: #1a1a1a;
+	border: 1px solid #333;
+	color: #fff;
+	padding: 0.75rem 1rem;
+}
+
+.form-control:focus {
+	background-color: #1a1a1a;
+	border-color: var(--accent-color);
+	color: #fff;
+	box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.form-control::placeholder {
+	color: #666;
+}
+
+.form-label {
+	color: #fff;
+	font-weight: 500;
+}
+
+.form-check-label {
+	color: #fff;
+}
+
+.form-text {
+	color: #999;
+}
+
+.invalid-feedback {
+	color: #dc3545;
+}
+
+.valid-feedback {
+	color: #28a745;
+}
+
+.form-check-input {
+	background-color: #1a1a1a;
+	border-color: #666;
+}
+
+.form-check-input:checked {
+	background-color: var(--accent-color);
+	border-color: var(--accent-color);
+}
+
+.form-check-input:focus {
+	border-color: var(--accent-color);
+	box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+/* Django/Crispy Forms error styling */
+.errorlist {
+	color: #dc3545;
+	list-style: none;
+	padding: 0;
+	margin: 0.25rem 0;
+	font-size: 0.875rem;
+}
+
+.help-text {
+	color: #999;
+	font-size: 0.875rem;
 }

@@ -1,0 +1,120 @@
+{% extends '_base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Settings - Murder Creek Barbell{% endblock %}
+
+{% block content %}
+<section class="bg-black text-white min-vh-100 py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 mb-4">
+                <h1 class="display-4 ubuntu-condensed text-white">Account Settings</h1>
+                <p class="text-white-50">Manage your profile and payment information</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Profile Settings -->
+            <div class="col-md-6">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-body">
+                        <h5 class="card-title ubuntu-condensed text-white mb-4">
+                            <i class="bi bi-person-circle me-2 accent-color"></i>
+                            Profile Information
+                        </h5>
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ form|crispy }}
+                            <button type="submit" class="btn btn-danger mt-3">
+                                <i class="bi bi-check-circle me-1"></i> Save Changes
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Method -->
+            <div class="col-md-6">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-body">
+                        <h5 class="card-title ubuntu-condensed text-white mb-4">
+                            <i class="bi bi-credit-card me-2 accent-color"></i>
+                            Payment Method
+                        </h5>
+
+                        {% if stripe_customer %}
+                            <p class="text-white-50 mb-4">
+                                Manage your payment method and billing details through Stripe's secure customer portal.
+                            </p>
+                            <a href="{% url 'accounts:customer_portal' %}" class="btn btn-outline-light">
+                                <i class="bi bi-box-arrow-up-right me-1"></i> Open Customer Portal
+                            </a>
+                        {% else %}
+                            <p class="text-white-50 mb-4">
+                                No payment method on file. Start a membership to add payment information.
+                            </p>
+                            <button class="btn btn-danger">
+                                <i class="bi bi-plus-circle me-1"></i> Start Membership
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card bg-dark border-danger">
+                    <div class="card-body">
+                        <h5 class="card-title ubuntu-condensed text-white text-danger mb-3">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Danger Zone
+                        </h5>
+                        <p class="text-white-50 mb-3">
+                            Once you delete your account, there is no going back. Please be certain.
+                        </p>
+                        <a href="{% url 'account_logout' %}" class="btn btn-outline-light me-2">
+                            <i class="bi bi-box-arrow-right me-1"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back to Dashboard -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left me-2"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .form-control {
+        background-color: #1a1a1a;
+        border: 1px solid #333;
+        color: #fff;
+        padding: 0.75rem 1rem;
+    }
+
+    .form-control:focus {
+        background-color: #1a1a1a;
+        border-color: var(--accent-color);
+        color: #fff;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+
+    .form-control::placeholder {
+        color: #666;
+    }
+
+    .form-label {
+        color: #fff;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}

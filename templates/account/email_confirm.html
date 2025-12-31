@@ -1,0 +1,45 @@
+{% extends '_base.html' %}
+{% load i18n %}
+
+{% block title %}Confirm Email - Murder Creek Barbell{% endblock %}
+
+{% block content %}
+<section class="bg-black text-white min-vh-100 d-flex align-items-center py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card bg-dark border-0 shadow-lg">
+                    <div class="card-body p-5 text-center">
+                        {% if confirmation %}
+                            {% if can_confirm %}
+                                <i class="bi bi-check-circle fs-1 text-success mb-4 d-block"></i>
+                                <h1 class="display-5 ubuntu-condensed mb-4 text-white">Email Confirmed!</h1>
+                                <p class="text-white mb-4">
+                                    Your email has been verified. You're being logged in...
+                                </p>
+                                <div class="spinner-border text-danger" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            {% else %}
+                                <i class="bi bi-exclamation-triangle fs-1 text-warning mb-4 d-block"></i>
+                                <h1 class="display-5 ubuntu-condensed mb-4 text-white">Already Confirmed</h1>
+                                <p class="text-white mb-4">
+                                    This email address has already been confirmed.
+                                </p>
+                                <a href="{% url 'account_login' %}" class="btn btn-danger">Go to Login</a>
+                            {% endif %}
+                        {% else %}
+                            <i class="bi bi-exclamation-circle fs-1 text-warning mb-4 d-block"></i>
+                            <h1 class="display-5 ubuntu-condensed mb-4 text-white">Invalid Link</h1>
+                            <p class="text-white mb-4">
+                                This confirmation link has expired or is invalid.
+                            </p>
+                            <a href="{% url 'account_signup' %}" class="btn btn-danger">Sign Up Again</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

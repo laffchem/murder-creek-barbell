@@ -1,0 +1,79 @@
+{% extends '_base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Cancel Subscription - Murder Creek Barbell{% endblock %}
+
+{% block content %}
+<section class="bg-black text-white min-vh-100 d-flex align-items-center py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card bg-dark border-danger shadow-lg">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <i class="bi bi-exclamation-triangle-fill fs-1 text-danger d-block mb-3"></i>
+                            <h1 class="display-5 ubuntu-condensed text-white">Cancel Subscription</h1>
+                            <p class="text-white-50">
+                                We're sorry to see you go
+                            </p>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <strong>What happens when you cancel:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>You'll continue to have access until {{ stripe_customer.current_period_end|date:"F d, Y" }}</li>
+                                <li>You won't be charged again after that date</li>
+                                <li>You can reactivate anytime before the end date</li>
+                            </ul>
+                        </div>
+
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ form|crispy }}
+
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-danger btn-lg py-3 ubuntu-condensed text-white">
+                                    <i class="bi bi-x-circle me-2"></i> Confirm Cancellation
+                                </button>
+                                <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-light btn-lg py-3 ubuntu-condensed text-white">
+                                    <i class="bi bi-arrow-left me-2"></i> Keep My Membership
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .form-control {
+        background-color: #1a1a1a;
+        border: 1px solid #333;
+        color: #fff;
+        padding: 0.75rem 1rem;
+    }
+
+    .form-control:focus {
+        background-color: #1a1a1a;
+        border-color: var(--accent-color);
+        color: #fff;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+
+    .form-check-input {
+        background-color: #1a1a1a;
+        border-color: #333;
+    }
+
+    .form-check-input:checked {
+        background-color: var(--accent-color);
+        border-color: var(--accent-color);
+    }
+
+    .form-label {
+        color: #fff;
+    }
+</style>
+{% endblock %}

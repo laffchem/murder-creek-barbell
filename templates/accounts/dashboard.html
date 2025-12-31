@@ -1,0 +1,123 @@
+{% extends '_base.html' %}
+
+{% block title %}Dashboard - Murder Creek Barbell{% endblock %}
+
+{% block content %}
+<section class="bg-black text-white min-vh-100 py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 mb-4">
+                <h1 class="display-4 ubuntu-condensed text-white">Dashboard</h1>
+                <p class="text-white-50">Welcome back, {{ user.get_full_name }}!</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Account Info Card -->
+            <div class="col-md-6">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-body">
+                        <h5 class="card-title ubuntu-condensed text-white d-flex align-items-center">
+                            <i class="bi bi-person-circle me-2 accent-color"></i>
+                            Account Information
+                        </h5>
+                        <hr class="border-secondary">
+                        <p class="mb-2 text-white"><strong>Name:</strong> {{ user.get_full_name }}</p>
+                        <p class="mb-2 text-white"><strong>Email:</strong> {{ user.email }}</p>
+                        <a href="{% url 'accounts:settings' %}" class="btn btn-outline-light btn-sm mt-3">
+                            <i class="bi bi-gear me-1"></i> Edit Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subscription Status Card -->
+            <div class="col-md-6">
+                <div class="card bg-dark border-secondary h-100">
+                    <div class="card-body">
+                        <h5 class="card-title ubuntu-condensed text-white d-flex align-items-center">
+                            <i class="bi bi-credit-card me-2 accent-color"></i>
+                            Membership Status
+                        </h5>
+                        <hr class="border-secondary">
+
+                        {% if stripe_customer and has_subscription %}
+                            <div class="mb-3">
+                                <span class="badge
+                                    {% if stripe_customer.subscription_status == 'active' %}bg-success
+                                    {% elif stripe_customer.subscription_status == 'trialing' %}bg-info
+                                    {% elif stripe_customer.subscription_status == 'past_due' %}bg-warning
+                                    {% else %}bg-secondary
+                                    {% endif %}
+                                    text-uppercase">
+                                    {{ stripe_customer.subscription_status }}
+                                </span>
+                            </div>
+
+                            {% if stripe_customer.current_period_end %}
+                                <p class="mb-2">
+                                    <strong>Next Billing:</strong>
+                                    {{ stripe_customer.current_period_end|date:"M d, Y" }}
+                                </p>
+                            {% endif %}
+
+                            {% if stripe_customer.cancel_at_period_end %}
+                                <div class="alert alert-warning">
+                                    <small>Your subscription will be canceled on {{ stripe_customer.current_period_end|date:"M d, Y" }}</small>
+                                </div>
+                            {% endif %}
+
+                            <div class="mt-3">
+                                <a href="{% url 'accounts:customer_portal' %}" class="btn btn-outline-light btn-sm me-2">
+                                    <i class="bi bi-gear me-1"></i> Manage Subscription
+                                </a>
+                                {% if not stripe_customer.cancel_at_period_end %}
+                                    <a href="{% url 'accounts:cancel_subscription' %}" class="btn btn-outline-danger btn-sm">
+                                        <i class="bi bi-x-circle me-1"></i> Cancel
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <p class="text-white-50 mb-3">No active membership</p>
+                            <button class="btn btn-danger">
+                                <i class="bi bi-plus-circle me-1"></i> Start Membership
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card bg-dark border-secondary">
+                    <div class="card-body">
+                        <h5 class="card-title ubuntu-condensed text-white mb-4">Quick Actions</h5>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <a href="{% url 'accounts:billing' %}" class="btn btn-outline-light w-100 py-3">
+                                    <i class="bi bi-receipt d-block fs-3 mb-2"></i>
+                                    <span class="ubuntu-condensed text-white">Payment History</span>
+                                </a>
+                            </div>
+                            <div class="col-md-4">
+                                <a href="{% url 'accounts:settings' %}" class="btn btn-outline-light w-100 py-3">
+                                    <i class="bi bi-gear d-block fs-3 mb-2"></i>
+                                    <span class="ubuntu-condensed text-white">Settings</span>
+                                </a>
+                            </div>
+                            <div class="col-md-4">
+                                <a href="{% url 'home' %}" class="btn btn-outline-light w-100 py-3">
+                                    <i class="bi bi-house d-block fs-3 mb-2"></i>
+                                    <span class="ubuntu-condensed text-white">Home</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

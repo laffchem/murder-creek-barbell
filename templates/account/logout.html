@@ -1,0 +1,32 @@
+{% extends '_base.html' %}
+
+{% block title %}Logout - Murder Creek Barbell{% endblock %}
+
+{% block content %}
+<section class="bg-black text-white min-vh-100 d-flex align-items-center py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card bg-dark border-0 shadow-lg">
+                    <div class="card-body p-5 text-center">
+                        <h1 class="display-5 ubuntu-condensed mb-4 text-white">Logout</h1>
+                        <p class="text-white-50 mb-4">
+                            Are you sure you want to logout?
+                        </p>
+
+                        <form method="post" action="{% url 'account_logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger px-5 py-3 ubuntu-condensed-bold">
+                                Yes, Logout
+                            </button>
+                            <a href="{% url 'home' %}" class="btn btn-outline-light px-5 py-3 ubuntu-condensed-bold ms-2">
+                                Cancel
+                            </a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
