@@ -53,9 +53,13 @@
                             <p class="text-white-50 mb-4">
                                 No payment method on file. Start a membership to add payment information.
                             </p>
-                            <button class="btn btn-danger">
-                                <i class="bi bi-plus-circle me-1"></i> Start Membership
-                            </button>
+                            <form method="post" action="{% url 'accounts:create_checkout_session' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="payment_type" value="subscription">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="bi bi-plus-circle me-1"></i> Start Membership
+                                </button>
+                            </form>
                         {% endif %}
                     </div>
                 </div>

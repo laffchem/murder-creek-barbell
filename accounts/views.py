@@ -5,10 +5,16 @@ from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.db import IntegrityError
+from datetime import datetime, timezone
 import stripe
 import json
+import logging
 from .models import StripeCustomer, Payment
 from .forms import UpdateProfileForm, CancelSubscriptionForm
+
+# Initialize logger
+logger = logging.getLogger(__name__)
 
 # Initialize Stripe
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -102,7 +108,7 @@ def create_checkout_session(request):
             )
 
         # Get price ID from request (you'll need to create products/prices in Stripe dashboard)
-        price_id = request.POST.get('price_id')  # e.g., 'price_xxx' from Stripe
+        price_id = 'price_1STl45Ru9ccavkk7c9LOo0rd'  # e.g., 'price_xxx' from Stripe
         payment_type = request.POST.get('payment_type', 'subscription')  # 'subscription' or 'payment'
 
         # Create checkout session
@@ -192,7 +198,7 @@ def cancel_subscription(request):
                 messages.success(request, 'Subscription will be canceled at the end of the billing period.')
                 return redirect('accounts:dashboard')
         else:
-            form = CancelSubscrationForm()
+            form = CancelSubscriptionForm()
 
         context = {
             'form': form,
@@ -216,123 +222,200 @@ def stripe_webhook(request):
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
     webhook_secret = settings.STRIPE_WEBHOOK_SECRET
 
+    logger.info("Received Stripe webhook request")
+
     try:
         event = stripe.Webhook.construct_event(
             payload, sig_header, webhook_secret
         )
-    except ValueError:
+    except ValueError as e:
+        logger.error(f"Webhook error: Invalid payload - {str(e)}")
         return HttpResponse(status=400)
-    except stripe.error.SignatureVerificationError:
+    except stripe.error.SignatureVerificationError as e:
+        logger.error(f"Webhook error: Invalid signature - {str(e)}")
         return HttpResponse(status=400)
 
+    event_type = event['type']
+    logger.info(f"Processing webhook event: {event_type}")
+
     # Handle the event
-    if event['type'] == 'customer.subscription.created':
+    if event_type == 'customer.subscription.created':
         subscription = event['data']['object']
         _handle_subscription_created(subscription)
 
-    elif event['type'] == 'customer.subscription.updated':
+    elif event_type == 'customer.subscription.updated':
         subscription = event['data']['object']
         _handle_subscription_updated(subscription)
 
-    elif event['type'] == 'customer.subscription.deleted':
+    elif event_type == 'customer.subscription.deleted':
         subscription = event['data']['object']
         _handle_subscription_deleted(subscription)
 
-    elif event['type'] == 'invoice.payment_succeeded':
+    elif event_type == 'invoice.payment_succeeded':
         invoice = event['data']['object']
         _handle_invoice_paid(invoice)
 
-    elif event['type'] == 'invoice.payment_failed':
+    elif event_type == 'invoice.payment_failed':
         invoice = event['data']['object']
         _handle_invoice_payment_failed(invoice)
 
+    else:
+        logger.info(f"Unhandled webhook event type: {event_type}")
+
+    logger.info(f"Successfully processed webhook event: {event_type}")
     return HttpResponse(status=200)
 
 
 def _handle_subscription_created(subscription):
     """Handle subscription created event."""
+    customer_id = subscription['customer']
+    subscription_id = subscription['id']
+
+    logger.info(f"Processing subscription.created for customer {customer_id}, subscription {subscription_id}")
+
     try:
-        customer_id = subscription['customer']
         stripe_customer = StripeCustomer.objects.get(stripe_customer_id=customer_id)
 
-        stripe_customer.stripe_subscription_id = subscription['id']
+        stripe_customer.stripe_subscription_id = subscription_id
         stripe_customer.subscription_status = subscription['status']
         stripe_customer.subscription_plan = subscription['items']['data'][0]['price']['id']
-        stripe_customer.current_period_end = subscription['current_period_end']
+
+        # Convert Unix timestamp to datetime
+        period_end_timestamp = subscription['current_period_end']
+        stripe_customer.current_period_end = datetime.fromtimestamp(
+            period_end_timestamp,
+            tz=timezone.utc
+        )
+
         stripe_customer.cancel_at_period_end = subscription['cancel_at_period_end']
         stripe_customer.save()
+
+        logger.info(f"Successfully updated subscription for customer {customer_id}")
     except StripeCustomer.DoesNotExist:
-        pass
+        logger.error(f"StripeCustomer not found for customer_id: {customer_id}")
+    except Exception as e:
+        logger.error(f"Error handling subscription.created for {customer_id}: {str(e)}")
 
 
 def _handle_subscription_updated(subscription):
     """Handle subscription updated event."""
+    customer_id = subscription['customer']
+    subscription_id = subscription['id']
+
+    logger.info(f"Processing subscription.updated for customer {customer_id}, subscription {subscription_id}")
+
     try:
-        customer_id = subscription['customer']
         stripe_customer = StripeCustomer.objects.get(stripe_customer_id=customer_id)
 
         stripe_customer.subscription_status = subscription['status']
-        stripe_customer.current_period_end = subscription['current_period_end']
+
+        # Convert Unix timestamp to datetime
+        period_end_timestamp = subscription['current_period_end']
+        stripe_customer.current_period_end = datetime.fromtimestamp(
+            period_end_timestamp,
+            tz=timezone.utc
+        )
+
         stripe_customer.cancel_at_period_end = subscription['cancel_at_period_end']
         stripe_customer.save()
+
+        logger.info(f"Successfully updated subscription for customer {customer_id}")
     except StripeCustomer.DoesNotExist:
-        pass
+        logger.error(f"StripeCustomer not found for customer_id: {customer_id}")
+    except Exception as e:
+        logger.error(f"Error handling subscription.updated for {customer_id}: {str(e)}")
 
 
 def _handle_subscription_deleted(subscription):
     """Handle subscription deleted event."""
+    customer_id = subscription['customer']
+    subscription_id = subscription['id']
+
+    logger.info(f"Processing subscription.deleted for customer {customer_id}, subscription {subscription_id}")
+
     try:
-        customer_id = subscription['customer']
         stripe_customer = StripeCustomer.objects.get(stripe_customer_id=customer_id)
 
         stripe_customer.subscription_status = 'canceled'
         stripe_customer.stripe_subscription_id = None
         stripe_customer.save()
+
+        logger.info(f"Successfully marked subscription as canceled for customer {customer_id}")
     except StripeCustomer.DoesNotExist:
-        pass
+        logger.error(f"StripeCustomer not found for customer_id: {customer_id}")
+    except Exception as e:
+        logger.error(f"Error handling subscription.deleted for {customer_id}: {str(e)}")
 
 
 def _handle_invoice_paid(invoice):
     """Handle invoice payment succeeded event."""
+    customer_id = invoice['customer']
+    payment_id = invoice['payment_intent'] or invoice['id']
+
+    logger.info(f"Processing invoice.payment_succeeded for customer {customer_id}, payment {payment_id}")
+
     try:
-        customer_id = invoice['customer']
         stripe_customer = StripeCustomer.objects.get(stripe_customer_id=customer_id)
 
-        # Create payment record
-        Payment.objects.create(
-            user=stripe_customer.user,
-            stripe_payment_id=invoice['payment_intent'] or invoice['id'],
-            amount=invoice['amount_paid'] / 100,  # Convert from cents
-            currency=invoice['currency'],
-            status='succeeded',
-            payment_type='subscription' if invoice.get('subscription') else 'one_time',
-            description=invoice.get('description', ''),
-            invoice_url=invoice.get('hosted_invoice_url', '')
+        # Use get_or_create to handle duplicate webhooks
+        payment, created = Payment.objects.get_or_create(
+            stripe_payment_id=payment_id,
+            defaults={
+                'user': stripe_customer.user,
+                'amount': invoice['amount_paid'] / 100,  # Convert from cents
+                'currency': invoice['currency'],
+                'status': 'succeeded',
+                'payment_type': 'subscription' if invoice.get('subscription') else 'one_time',
+                'description': invoice.get('description', ''),
+                'invoice_url': invoice.get('hosted_invoice_url', '')
+            }
         )
+
+        if created:
+            logger.info(f"Created new payment record for {payment_id}")
+        else:
+            logger.info(f"Payment record already exists for {payment_id}, skipping duplicate")
+
     except StripeCustomer.DoesNotExist:
-        pass
+        logger.error(f"StripeCustomer not found for customer_id: {customer_id}")
+    except Exception as e:
+        logger.error(f"Error handling invoice.payment_succeeded for {customer_id}: {str(e)}")
 
 
 def _handle_invoice_payment_failed(invoice):
     """Handle invoice payment failed event."""
+    customer_id = invoice['customer']
+    payment_id = invoice['payment_intent'] or invoice['id']
+
+    logger.info(f"Processing invoice.payment_failed for customer {customer_id}, payment {payment_id}")
+
     try:
-        customer_id = invoice['customer']
         stripe_customer = StripeCustomer.objects.get(stripe_customer_id=customer_id)
 
         # Update subscription status
         stripe_customer.subscription_status = 'past_due'
         stripe_customer.save()
 
-        # Create failed payment record
-        Payment.objects.create(
-            user=stripe_customer.user,
-            stripe_payment_id=invoice['payment_intent'] or invoice['id'],
-            amount=invoice['amount_due'] / 100,
-            currency=invoice['currency'],
-            status='failed',
-            payment_type='subscription' if invoice.get('subscription') else 'one_time',
-            description=invoice.get('description', ''),
-            invoice_url=invoice.get('hosted_invoice_url', '')
+        # Use get_or_create to handle duplicate webhooks
+        payment, created = Payment.objects.get_or_create(
+            stripe_payment_id=payment_id,
+            defaults={
+                'user': stripe_customer.user,
+                'amount': invoice['amount_due'] / 100,
+                'currency': invoice['currency'],
+                'status': 'failed',
+                'payment_type': 'subscription' if invoice.get('subscription') else 'one_time',
+                'description': invoice.get('description', ''),
+                'invoice_url': invoice.get('hosted_invoice_url', '')
+            }
         )
+
+        if created:
+            logger.info(f"Created new failed payment record for {payment_id}")
+        else:
+            logger.info(f"Failed payment record already exists for {payment_id}, skipping duplicate")
+
     except StripeCustomer.DoesNotExist:
-        pass
+        logger.error(f"StripeCustomer not found for customer_id: {customer_id}")
+    except Exception as e:
+        logger.error(f"Error handling invoice.payment_failed for {customer_id}: {str(e)}")

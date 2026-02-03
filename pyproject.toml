@@ -10,5 +10,6 @@ dependencies = [
     "django-cotton>=2.4.0",
     "django-crispy-forms>=2.5",
     "django-shinobi>=1.4.0",
+    "python-dotenv>=1.2.1",
     "stripe>=14.1.0",
 ]
