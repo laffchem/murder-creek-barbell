@@ -2,8 +2,7 @@
 Management command to test Stripe webhook handlers without needing actual Stripe events.
 """
 from django.core.management.base import BaseCommand
-from django.utils import timezone
-from accounts.views import (
+from accounts.views.webhooks import (
     _handle_subscription_created,
     _handle_subscription_updated,
     _handle_invoice_paid

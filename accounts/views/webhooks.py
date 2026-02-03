@@ -1,217 +1,12 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.conf import settings
-from django.http import HttpResponse, JsonResponse
+"""Stripe webhook handlers and event processors."""
+from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.db import IntegrityError
+from django.conf import settings
 from datetime import datetime, timezone
 import stripe
-import json
-import logging
-from .models import StripeCustomer, Payment
-from .forms import UpdateProfileForm, CancelSubscriptionForm
-
-# Initialize logger
-logger = logging.getLogger(__name__)
-
-# Initialize Stripe
-stripe.api_key = settings.STRIPE_SECRET_KEY
-
-
-@login_required
-def dashboard(request):
-    """Account dashboard view."""
-    user = request.user
-    stripe_customer = None
-    has_subscription = False
-
-    try:
-        stripe_customer = user.stripe_customer
-        has_subscription = stripe_customer.has_active_subscription
-    except StripeCustomer.DoesNotExist:
-        pass
-
-    context = {
-        'stripe_customer': stripe_customer,
-        'has_subscription': has_subscription,
-    }
-    return render(request, 'accounts/dashboard.html', context)
-
-
-@login_required
-def billing(request):
-    """Billing and payment history view."""
-    user = request.user
-    payments = user.payments.all()[:20]  # Last 20 payments
-
-    try:
-        stripe_customer = user.stripe_customer
-    except StripeCustomer.DoesNotExist:
-        stripe_customer = None
-
-    context = {
-        'payments': payments,
-        'stripe_customer': stripe_customer,
-    }
-    return render(request, 'accounts/billing.html', context)
-
-
-@login_required
-def settings(request):
-    """Account settings view."""
-    user = request.user
-
-    if request.method == 'POST':
-        form = UpdateProfileForm(request.POST, instance=user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Profile updated successfully!')
-            return redirect('accounts:settings')
-    else:
-        form = UpdateProfileForm(instance=user)
-
-    try:
-        stripe_customer = user.stripe_customer
-    except StripeCustomer.DoesNotExist:
-        stripe_customer = None
-
-    context = {
-        'form': form,
-        'stripe_customer': stripe_customer,
-    }
-    return render(request, 'accounts/settings.html', context)
-
-
-@login_required
-@require_POST
-def create_checkout_session(request):
-    """Create a Stripe checkout session for subscription or one-time payment."""
-    try:
-        # Get or create Stripe customer
-        stripe_customer = None
-        try:
-            stripe_customer = request.user.stripe_customer
-            customer_id = stripe_customer.stripe_customer_id
-        except StripeCustomer.DoesNotExist:
-            # Create new Stripe customer
-            customer = stripe.Customer.create(
-                email=request.user.email,
-                name=request.user.get_full_name(),
-            )
-            customer_id = customer.id
-            # Save to database
-            stripe_customer = StripeCustomer.objects.create(
-                user=request.user,
-                stripe_customer_id=customer_id
-            )
-
-        # Get price ID from request (you'll need to create products/prices in Stripe dashboard)
-        price_id = 'price_1STl45Ru9ccavkk7c9LOo0rd'  # e.g., 'price_xxx' from Stripe
-        payment_type = request.POST.get('payment_type', 'subscription')  # 'subscription' or 'payment'
-
-        # Create checkout session
-        if payment_type == 'subscription':
-            checkout_session = stripe.checkout.Session.create(
-                customer=customer_id,
-                line_items=[{
-                    'price': price_id,
-                    'quantity': 1,
-                }],
-                mode='subscription',
-                success_url=request.build_absolute_uri('/account/checkout/success/'),
-                cancel_url=request.build_absolute_uri('/account/checkout/cancel/'),
-            )
-        else:
-            checkout_session = stripe.checkout.Session.create(
-                customer=customer_id,
-                line_items=[{
-                    'price': price_id,
-                    'quantity': 1,
-                }],
-                mode='payment',
-                success_url=request.build_absolute_uri('/account/checkout/success/'),
-                cancel_url=request.build_absolute_uri('/account/checkout/cancel/'),
-            )
-
-        return redirect(checkout_session.url)
-
-    except Exception as e:
-        messages.error(request, f'Error creating checkout session: {str(e)}')
-        return redirect('accounts:dashboard')
-
-
-@login_required
-def checkout_success(request):
-    """Checkout success page."""
-    messages.success(request, 'Payment successful! Thank you for your purchase.')
-    return redirect('accounts:dashboard')
-
-
-@login_required
-def checkout_cancel(request):
-    """Checkout canceled page."""
-    messages.info(request, 'Checkout was canceled.')
-    return redirect('accounts:dashboard')
-
-
-@login_required
-def create_customer_portal_session(request):
-    """Create a Stripe customer portal session."""
-    try:
-        stripe_customer = request.user.stripe_customer
-        portal_session = stripe.billing_portal.Session.create(
-            customer=stripe_customer.stripe_customer_id,
-            return_url=request.build_absolute_uri('/account/settings/'),
-        )
-        return redirect(portal_session.url)
-    except StripeCustomer.DoesNotExist:
-        messages.error(request, 'No customer account found.')
-        return redirect('accounts:settings')
-    except Exception as e:
-        messages.error(request, f'Error accessing customer portal: {str(e)}')
-        return redirect('accounts:settings')
-
-
-@login_required
-def cancel_subscription(request):
-    """Cancel user subscription."""
-    try:
-        stripe_customer = request.user.stripe_customer
-
-        if not stripe_customer.stripe_subscription_id:
-            messages.error(request, 'No active subscription found.')
-            return redirect('accounts:dashboard')
-
-        if request.method == 'POST':
-            form = CancelSubscriptionForm(request.POST)
-            if form.is_valid():
-                # Cancel subscription at period end
-                stripe.Subscription.modify(
-                    stripe_customer.stripe_subscription_id,
-                    cancel_at_period_end=True
-                )
-                stripe_customer.cancel_at_period_end = True
-                stripe_customer.save()
-
-                messages.success(request, 'Subscription will be canceled at the end of the billing period.')
-                return redirect('accounts:dashboard')
-        else:
-            form = CancelSubscriptionForm()
-
-        context = {
-            'form': form,
-            'stripe_customer': stripe_customer,
-        }
-        return render(request, 'accounts/cancel_subscription.html', context)
-
-    except StripeCustomer.DoesNotExist:
-        messages.error(request, 'No subscription found.')
-        return redirect('accounts:dashboard')
-    except Exception as e:
-        messages.error(request, f'Error canceling subscription: {str(e)}')
-        return redirect('accounts:dashboard')
+from ..models import StripeCustomer, Payment
+from .stripe_client import logger
 
 
 @csrf_exempt
@@ -281,11 +76,17 @@ def _handle_subscription_created(subscription):
         stripe_customer.subscription_plan = subscription['items']['data'][0]['price']['id']
 
         # Convert Unix timestamp to datetime
-        period_end_timestamp = subscription['current_period_end']
-        stripe_customer.current_period_end = datetime.fromtimestamp(
-            period_end_timestamp,
-            tz=timezone.utc
-        )
+        # Use cancel_at if subscription is being canceled, otherwise use current_period_end
+        if subscription['cancel_at_period_end'] and subscription.get('cancel_at'):
+            period_end_timestamp = subscription['cancel_at']
+        else:
+            period_end_timestamp = subscription.get('current_period_end')
+
+        if period_end_timestamp:
+            stripe_customer.current_period_end = datetime.fromtimestamp(
+                period_end_timestamp,
+                tz=timezone.utc
+            )
 
         stripe_customer.cancel_at_period_end = subscription['cancel_at_period_end']
         stripe_customer.save()
@@ -310,11 +111,17 @@ def _handle_subscription_updated(subscription):
         stripe_customer.subscription_status = subscription['status']
 
         # Convert Unix timestamp to datetime
-        period_end_timestamp = subscription['current_period_end']
-        stripe_customer.current_period_end = datetime.fromtimestamp(
-            period_end_timestamp,
-            tz=timezone.utc
-        )
+        # Use cancel_at if subscription is being canceled, otherwise use current_period_end
+        if subscription['cancel_at_period_end'] and subscription.get('cancel_at'):
+            period_end_timestamp = subscription['cancel_at']
+        else:
+            period_end_timestamp = subscription.get('current_period_end')
+
+        if period_end_timestamp:
+            stripe_customer.current_period_end = datetime.fromtimestamp(
+                period_end_timestamp,
+                tz=timezone.utc
+            )
 
         stripe_customer.cancel_at_period_end = subscription['cancel_at_period_end']
         stripe_customer.save()
@@ -350,7 +157,8 @@ def _handle_subscription_deleted(subscription):
 def _handle_invoice_paid(invoice):
     """Handle invoice payment succeeded event."""
     customer_id = invoice['customer']
-    payment_id = invoice['payment_intent'] or invoice['id']
+    # Use invoice ID as payment ID (payment_intent field removed in Stripe API 2025-03-31)
+    payment_id = invoice['id']
 
     logger.info(f"Processing invoice.payment_succeeded for customer {customer_id}, payment {payment_id}")
 
@@ -385,7 +193,8 @@ def _handle_invoice_paid(invoice):
 def _handle_invoice_payment_failed(invoice):
     """Handle invoice payment failed event."""
     customer_id = invoice['customer']
-    payment_id = invoice['payment_intent'] or invoice['id']
+    # Use invoice ID as payment ID (payment_intent field removed in Stripe API 2025-03-31)
+    payment_id = invoice['id']
 
     logger.info(f"Processing invoice.payment_failed for customer {customer_id}, payment {payment_id}")
 

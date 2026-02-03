@@ -25,5 +25,5 @@ urlpatterns = [
     path('cancel-subscription/', views.cancel_subscription, name='cancel_subscription'),
 
     # Webhooks
-    path('webhook/', views.stripe_webhook, name='stripe_webhook'),
+    path('webhook', views.stripe_webhook, name='stripe_webhook'),
 ]
